@@ -2,22 +2,42 @@
 #include<fstream>
 #include<vector>
 
-int CountDSU(const std::vector<int>& DSU)
+
+size_t GoToLeader(std::vector<int>& DSU,size_t index)
 {
-    int count(0);
-    for(int i: DSU)
-       if(i<0)
-           ++count; 
-    return count;
+    if(DSU[index]>=0)
+    {
+        DSU[index]=GoToLeader(DSU,DSU[index]);
+        return DSU[index];
+    }
+
+    return index;
 }
 
-void GoToLeader(const std::vector<int>& DSU,size_t& index)
+bool MergeTowns(std::vector<int>& dsu, size_t el_1,size_t el_2)
 {
-    if(DSU[index]>0)
-        while(DSU[index]>0)
-            index=DSU[index];
-    return;
+    size_t rootEl_1(GoToLeader(dsu,el_1));
+    size_t rootEl_2(GoToLeader(dsu,el_2));
+   
+    if(rootEl_1!=rootEl_2)
+    {
+        if(dsu[rootEl_1]>=dsu[rootEl_2]) 
+        {
+            dsu[rootEl_1]=rootEl_2;
+            --dsu[rootEl_2];
+        }
+        else
+        {
+            dsu[rootEl_2]=rootEl_1;
+            --dsu[rootEl_1];
+        }
+        return true;
+    }
+    else
+        return false;
 }
+
+
 
 int main()
 {
@@ -26,40 +46,25 @@ int main()
 
     size_t numOfTowns(0);
     size_t numOfRoads(0);
+    size_t numOfComponents(0);
 
     in>>numOfTowns>>numOfRoads;
     
-    std::vector<int > arrOfDSU(numOfTowns+1,-1);
+    std::vector<int> arrOfDSU(numOfTowns+1);
+    for(size_t i(1);i<arrOfDSU.size();++i)
+        arrOfDSU[i]=-1;
 
-    arrOfDSU[0]=0;
-    for(size_t i(0);i < numOfRoads;++i)
+    numOfComponents=numOfTowns;
+
+    for(size_t i(0);i<numOfRoads;++i)
     {
-        if(CountDSU(arrOfDSU)==1)
-        {
-            out<<1;
-            break;
-        }
-        size_t indexFisrtTown(0),indexSecondTown(0);
+        size_t el_1(0),el_2(0);
+        in>>el_1>>el_2;
+    
+        if(MergeTowns(arrOfDSU,el_1,el_2))
+            --numOfComponents;
 
-        in>>indexFisrtTown>>indexSecondTown;
-        
-        size_t leaderFirst(indexFisrtTown),leaderSecond(indexSecondTown);
-
-        GoToLeader(arrOfDSU,leaderFirst);
-        GoToLeader(arrOfDSU,leaderSecond);
-
-        if(arrOfDSU[leaderFirst]>=arrOfDSU[leaderSecond])
-        {
-            arrOfDSU[leaderSecond]+=arrOfDSU[leaderFirst];
-            arrOfDSU[leaderFirst]=leaderSecond;
-        }
-        else
-        {
-            arrOfDSU[leaderFirst]+=arrOfDSU[leaderSecond];
-            arrOfDSU[leaderSecond]=leaderFirst;
-        }
-        out<<CountDSU(arrOfDSU)<<"\n";
-
+        out<<numOfComponents<<'\n';
     }
 
     in.close();
